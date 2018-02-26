@@ -1,21 +1,18 @@
 # vue-music
 
-> A Vue.js project
+> 基于vue开发的音乐app
 
-## Build Setup
+## 启动项目
 
 ``` bash
-# install dependencies
+# 安装依赖
 npm install
 
-# serve with hot reload at localhost:8080
+# 启动服务
 npm run dev
 
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
 ```
+在本地预览：[localhost:8080](localhost:8080)
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+## 项目文档
+[文档](https://github.com/lfyo/vue-music/tree/master/docs)

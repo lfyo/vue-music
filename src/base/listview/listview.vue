@@ -10,7 +10,7 @@
       <li v-for="(group, index) in data" class="list-group" :key="index" ref="listGroup">
         <h2 class="list-group-title">{{group.title}}</h2>
         <ul>
-          <li class="list-group-item" v-for="(item, index) in group.items" :key="index">
+          <li class="list-group-item" @click="selectItem(item)" v-for="(item, index) in group.items" :key="index">
             <img class="avatar" v-lazy="item.avatar">
             <span class="name">{{item.name}}</span>
           </li>
@@ -88,6 +88,9 @@
       }
     },
     methods: {
+      selectItem(item) {
+        this.$emit('select', item)
+      },
       onShortcutTouchStart(e) {
         let anchorIndex = getData(e.target, 'index')
         let firstTouch = e.touches[0]
@@ -149,7 +152,6 @@
           if (-newY >= height1 && -newY < height2) {
             this.currentIndex = i
             this.diff = height2 + newY
-            console.log(height2 + '-' + newY)
             return
           }
         }
