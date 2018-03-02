@@ -31,14 +31,14 @@
             <div class="icon i-left">
               <i class="icon-sequence"></i>
             </div>
-            <div class="icon i-left">
-              <i class="icon-prev"></i>
+            <div class="icon i-left" :class="disableCls">
+              <i class="icon-prev" @click="prev"></i>
             </div>
-            <div class="icon i-center">
+            <div class="icon i-center" :class="disableCls">
               <i :class="playIcon" @click="togglePlay"></i>
             </div>
-            <div class="icon i-right">
-              <i class="icon-next"></i>
+            <div class="icon i-right" :class="disableCls">
+              <i class="icon-next" @click="next"></i>
             </div>
             <div class="icon i-right">
               <i class="icon-not-favorite"></i>
@@ -65,8 +65,11 @@
       </div>
     </transition>
     <audio
-      src="http://dl.stream.qqmusic.qq.com/M800001dPgPv270L2Q.mp3?vkey=11E80FC29E8856F87B2DC5A06927F94C847CE9A350661F6369DDE31ECB58B57C9CF219CF3AFD6110AE1511C6812A9FCF989B1BA6C8CEA22F&guid=5150825362&fromtag=1"
-      ref="audio"></audio>
+      :src="songSrc"
+      ref="audio"
+      @play="ready"
+      @error="error"
+    ></audio>
   </div>
 </template>
 
@@ -78,6 +81,12 @@
   const transform = prefixStyle('transform')
 
   export default {
+    data() {
+      return {
+        songReady: false,
+        songSrc: 'http://dl.stream.qqmusic.qq.com/M800001dPgPv270L2Q.mp3?vkey=11E80FC29E8856F87B2DC5A06927F94C847CE9A350661F6369DDE31ECB58B57C9CF219CF3AFD6110AE1511C6812A9FCF989B1BA6C8CEA22F&guid=5150825362&fromtag=1'
+      }
+    },
     computed: {
       playIcon() {
         return this.playing ? 'icon-pause' : 'icon-play'
@@ -87,6 +96,9 @@
       },
       cdCls() {
         return this.playing ? 'play' : 'play pause'
+      },
+      disableCls() {
+        return this.songReady ? '' : 'disable'
       },
       ...mapGetters([
         'playlist',
@@ -102,6 +114,34 @@
       },
       togglePlay() {
         this.setPlayingState(!this.playing)
+      },
+      prev() {
+        if (!this.songReady) {
+          return
+        }
+        let index = this.currentIndex - 1
+        if (index === -1) {
+          index = this.playlist.length - 1
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlay()
+        }
+        this.songReady = false
+      },
+      next() {
+        if (!this.songReady) {
+          return
+        }
+        let index = this.currentIndex + 1
+        if (index === this.playlist.length) {
+          index = 0
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlay()
+        }
+        this.songReady = false
       },
       enter(el, done) {
         const {x, y, scale} = this._getPosAndScale()
@@ -143,6 +183,12 @@
         this.$refs.cdWrapper.style.transition = ''
         this.$refs.cdWrapper.style[transform] = ''
       },
+      ready() {
+        this.songReady = true
+      },
+      error() {
+        this.songReady = true
+      },
       _getPosAndScale() {
         const targetWidth = 40
         const paddingLeft = 40
@@ -160,7 +206,8 @@
       },
       ...mapMutations({
         setFullScreen: 'SET_FULL_SCREEN',
-        setPlayingState: 'SET_PLAYING_STATE'
+        setPlayingState: 'SET_PLAYING_STATE',
+        setCurrentIndex: 'SET_CURRENT_INDEX'
       })
     },
     watch: {
