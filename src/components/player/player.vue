@@ -27,6 +27,13 @@
           </div>
         </div>
         <div class="bottom">
+          <div class="progress-wrapper">
+            <span class="time time-l">{{format(currentTime)}}</span>
+            <div class="progress-bar-wrapper">
+              <progress-bar :percent="percent" @percentChange="onProgressBarChange"></progress-bar>
+            </div>
+            <span class="time time-r">{{format(currentSong.duration)}}</span>
+          </div>
           <div class="operators">
             <div class="icon i-left">
               <i class="icon-sequence"></i>
@@ -35,7 +42,7 @@
               <i class="icon-prev" @click="prev"></i>
             </div>
             <div class="icon i-center" :class="disableCls">
-              <i :class="playIcon" @click="togglePlay"></i>
+              <i :class="playIcon" @click="togglePlaying"></i>
             </div>
             <div class="icon i-right" :class="disableCls">
               <i class="icon-next" @click="next"></i>
@@ -48,7 +55,7 @@
       </div>
     </transition>
     <transition name="min">
-      <div class="mini-player" v-show="!fullScreen">
+      <div class="mini-player" v-show="!fullScreen" @click="open">
         <div class="icon">
           <img :class="cdCls" width="40" height="40" :src="currentSong.image">
         </div>
@@ -57,7 +64,9 @@
           <p class="desc" v-html="currentSong.singer"></p>
         </div>
         <div class="control">
-          <i :class="minIcon" @click="togglePlay"></i>
+          <progress-circle :radius="radius" :percent="percent">
+            <i @click.stop="togglePlaying" class="icon-mini" :class="miniIcon"></i>
+          </progress-circle>
         </div>
         <div class="control">
           <i class="icon-playlist"></i>
@@ -69,6 +78,7 @@
       ref="audio"
       @play="ready"
       @error="error"
+      @timeupdate="updateTime"
     ></audio>
   </div>
 </template>
@@ -77,6 +87,8 @@
   import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '../../common/js/dom'
+  import ProgressBar from '../../base/progress-bar/progress-bar'
+  import ProgressCircle from '../../base/progress-circle/progress-circle'
 
   const transform = prefixStyle('transform')
 
@@ -84,14 +96,16 @@
     data() {
       return {
         songReady: false,
-        songSrc: 'http://dl.stream.qqmusic.qq.com/M800001dPgPv270L2Q.mp3?vkey=11E80FC29E8856F87B2DC5A06927F94C847CE9A350661F6369DDE31ECB58B57C9CF219CF3AFD6110AE1511C6812A9FCF989B1BA6C8CEA22F&guid=5150825362&fromtag=1'
+        songSrc: 'http://dl.stream.qqmusic.qq.com/M800001dPgPv270L2Q.mp3?vkey=11E80FC29E8856F87B2DC5A06927F94C847CE9A350661F6369DDE31ECB58B57C9CF219CF3AFD6110AE1511C6812A9FCF989B1BA6C8CEA22F&guid=5150825362&fromtag=1',
+        currentTime: 0,
+        radius: 32
       }
     },
     computed: {
       playIcon() {
         return this.playing ? 'icon-pause' : 'icon-play'
       },
-      minIcon() {
+      miniIcon() {
         return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
       },
       cdCls() {
@@ -99,6 +113,9 @@
       },
       disableCls() {
         return this.songReady ? '' : 'disable'
+      },
+      percent() {
+        return this.currentTime / this.currentSong.duration
       },
       ...mapGetters([
         'playlist',
@@ -109,10 +126,13 @@
       ])
     },
     methods: {
+      open() {
+        this.setFullScreen(true)
+      },
       back() {
         this.setFullScreen(false)
       },
-      togglePlay() {
+      togglePlaying() {
         this.setPlayingState(!this.playing)
       },
       prev() {
@@ -125,7 +145,7 @@
         }
         this.setCurrentIndex(index)
         if (!this.playing) {
-          this.togglePlay()
+          this.togglePlaying()
         }
         this.songReady = false
       },
@@ -139,7 +159,7 @@
         }
         this.setCurrentIndex(index)
         if (!this.playing) {
-          this.togglePlay()
+          this.togglePlaying()
         }
         this.songReady = false
       },
@@ -189,6 +209,33 @@
       error() {
         this.songReady = true
       },
+      updateTime(e) {
+        this.currentTime = e.target.currentTime
+      },
+      onProgressBarChange(percent) {
+        const currentTime = this.currentSong.duration * percent
+        this.$refs.audio.currentTime = currentTime
+        if (!this.playing) {
+          this.togglePlayinging()
+        }
+        if (this.currentLyric) {
+          this.currentLyric.seek(currentTime * 1000)
+        }
+      },
+      format(interval) {
+        interval = interval | 0
+        const minute = interval / 60 | 0
+        const second = this._pad(interval % 60)
+        return `${minute}:${second}`
+      },
+      _pad(num, n = 2) {
+        let len = num.toString().length
+        while (len < n) {
+          num = '0' + num
+          len++
+        }
+        return num
+      },
       _getPosAndScale() {
         const targetWidth = 40
         const paddingLeft = 40
@@ -222,6 +269,10 @@
           newPlaying ? audio.play() : audio.pause()
         })
       }
+    },
+    components: {
+      ProgressBar,
+      ProgressCircle
     }
   }
 </script>
